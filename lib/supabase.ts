@@ -1,9 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+let _supabase: SupabaseClient | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) {
+      throw new Error('Supabase URL and anon key must be set in environment variables');
+    }
+    _supabase = createClient(url, key);
+  }
+  return _supabase;
+}
 
 // ========== Database Types ==========
 
@@ -54,7 +63,7 @@ export interface DbCustomModifier {
 // ========== Player Operations ==========
 
 export async function getPlayers() {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('players')
     .select('*')
     .order('created_at', { ascending: true });
@@ -63,7 +72,7 @@ export async function getPlayers() {
 }
 
 export async function createPlayer(name: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('players')
     .insert({ name })
     .select()
@@ -75,7 +84,7 @@ export async function createPlayer(name: string) {
 // ========== Character Operations ==========
 
 export async function getCharactersByPlayer(playerId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('characters')
     .select('*')
     .eq('player_id', playerId)
@@ -85,7 +94,7 @@ export async function getCharactersByPlayer(playerId: string) {
 }
 
 export async function getCharacter(id: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('characters')
     .select('*')
     .eq('id', id)
@@ -95,7 +104,7 @@ export async function getCharacter(id: string) {
 }
 
 export async function createCharacter(character: Omit<DbCharacter, 'id' | 'created_at' | 'updated_at' | 'level'>) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('characters')
     .insert(character)
     .select()
@@ -105,7 +114,7 @@ export async function createCharacter(character: Omit<DbCharacter, 'id' | 'creat
 }
 
 export async function deleteCharacter(id: string) {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('characters')
     .delete()
     .eq('id', id);
@@ -115,7 +124,7 @@ export async function deleteCharacter(id: string) {
 // ========== Level Up Operations ==========
 
 export async function getLevelUps(characterId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('level_ups')
     .select('*')
     .eq('character_id', characterId)
@@ -126,7 +135,7 @@ export async function getLevelUps(characterId: string) {
 
 export async function addLevelUp(characterId: string, level: number, bonusType: string) {
   // Insert the level up record
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('level_ups')
     .insert({ character_id: characterId, level, bonus_type: bonusType })
     .select()
@@ -134,7 +143,7 @@ export async function addLevelUp(characterId: string, level: number, bonusType: 
   if (error) throw error;
 
   // Update character level
-  const { error: updateError } = await supabase
+  const { error: updateError } = await getSupabase()
     .from('characters')
     .update({ level, updated_at: new Date().toISOString() })
     .eq('id', characterId);
@@ -146,7 +155,7 @@ export async function addLevelUp(characterId: string, level: number, bonusType: 
 // ========== Custom Modifier Operations ==========
 
 export async function getModifiers(characterId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('custom_modifiers')
     .select('*')
     .eq('character_id', characterId)
@@ -156,7 +165,7 @@ export async function getModifiers(characterId: string) {
 }
 
 export async function addModifier(modifier: Omit<DbCustomModifier, 'id' | 'created_at'>) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('custom_modifiers')
     .insert(modifier)
     .select()
@@ -166,7 +175,7 @@ export async function addModifier(modifier: Omit<DbCustomModifier, 'id' | 'creat
 }
 
 export async function toggleModifier(id: string, isActive: boolean) {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('custom_modifiers')
     .update({ is_active: isActive })
     .eq('id', id);
@@ -174,7 +183,7 @@ export async function toggleModifier(id: string, isActive: boolean) {
 }
 
 export async function deleteModifier(id: string) {
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('custom_modifiers')
     .delete()
     .eq('id', id);
