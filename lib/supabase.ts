@@ -66,7 +66,7 @@ export async function getPlayers() {
   const { data, error } = await getSupabase()
     .from('players')
     .select('*')
-    .order('created_at', { ascending: true });
+    .order('name', { ascending: true });
   if (error) throw error;
   return data as DbPlayer[];
 }
