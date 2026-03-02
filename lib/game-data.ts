@@ -506,6 +506,7 @@ export const SKILL_TREES: SkillTree[] = [
         choices: [
           { id: 'shadow-ranger-2-move', name: 'Shadow Step', icon: '👢', description: 'You move like a ghost.', category: 'stat', statEffect: { move: 1 } },
           { id: 'shadow-ranger-2-armor', name: 'Shadow Cloak', icon: '🛡️', description: 'Darkness shields you from harm.', category: 'stat', statEffect: { armor: 1 } },
+          { id: 'shadow-ranger-2-rapid-shot', name: 'Rapid Shot', icon: '🏹', description: '1 AP: Fire two quick arrows at one target.', category: 'ability' },
         ],
       },
       {
@@ -513,6 +514,7 @@ export const SKILL_TREES: SkillTree[] = [
         choices: [
           { id: 'shadow-ranger-3-smoke', name: 'Smoke Bomb', icon: '💨', description: '1 AP: All allies become hidden. Enemies need 15+ to hit.', category: 'ability' },
           { id: 'shadow-ranger-3-poison', name: 'Poison Blade', icon: '🗡️', description: '1 AP: Your next attack deals +2 poison damage over 1 turn.', category: 'ability' },
+          { id: 'shadow-ranger-3-poison-shot', name: 'Poison Shot', icon: '☠️', description: '1 AP: Fire a poisoned arrow that deals weapon damage + 2 poison damage.', category: 'ability' },
         ],
       },
       {
