@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { CLASSES, SKILL_TREES } from '@/lib/game-data';
 
 export default function DMReferencePage() {
   const router = useRouter();
@@ -88,6 +89,82 @@ export default function DMReferencePage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Class Progression Reference */}
+        <div style={{ borderTop: '2px solid #c4a46a', paddingTop: '12px', marginTop: '14px' }}>
+          <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: '14pt', fontWeight: 700, color: '#2c1810', marginBottom: '10px' }}>Class Progression Reference</h2>
+          <p style={{ fontSize: '10pt', color: '#5a3e28', marginBottom: '12px', fontStyle: 'italic' }}>
+            At each level-up, the player picks one skill from the available choices for their subclass.
+          </p>
+
+          {CLASSES.map(cls => cls.subclasses.map(sub => {
+            const tree = SKILL_TREES.find(t => t.subclassId === sub.id);
+            if (!tree) return null;
+
+            const dmTips: Record<string, string> = {
+              guardian: 'Let the Guardian shine by sending waves of enemies — they love protecting allies!',
+              berserker: 'Give the Berserker tough single targets to smash — they deal massive burst damage.',
+              sharpshooter: 'Use open battlefields with range zones — Sharpshooters dominate at distance.',
+              'shadow-ranger': 'Add shadows and hiding spots to your maps — the Shadow Ranger thrives in stealth.',
+              pyromancer: 'Group enemies together — Pyromancers love splash damage and AoE fire.',
+              frostweaver: 'Use choke points and narrow corridors — Frostweavers excel at crowd control.',
+            };
+
+            return (
+              <div key={sub.id} style={{ marginBottom: '16px', background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '10px 12px', border: '1px solid #c4a46a' }}>
+                <div style={{ fontFamily: "'Cinzel', serif", fontSize: '12pt', fontWeight: 700, color: '#2c1810', marginBottom: '2px' }}>
+                  {cls.icon} {cls.name} &mdash; {sub.icon} {sub.name}
+                </div>
+                {dmTips[sub.id] && (
+                  <div style={{ fontSize: '9pt', color: '#5a3e28', fontStyle: 'italic', marginBottom: '6px' }}>
+                    DM Tip: {dmTips[sub.id]}
+                  </div>
+                )}
+                <table style={{ width: '100%', fontSize: '9pt', borderCollapse: 'collapse', color: '#2c1810' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid #c4a46a' }}>
+                      <th style={{ textAlign: 'left', padding: '3px 4px', fontFamily: "'Cinzel', serif", width: '36px' }}>Lv</th>
+                      <th style={{ textAlign: 'left', padding: '3px 4px', fontFamily: "'Cinzel', serif" }}>Choices</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style={{ borderBottom: '1px solid #dbc89e' }}>
+                      <td style={{ padding: '2px 4px', fontWeight: 700 }}>1</td>
+                      <td style={{ padding: '2px 4px' }}>{sub.icon} <b>{sub.ability}</b> &mdash; {sub.abilityDesc}</td>
+                    </tr>
+                    {tree.levels.map(lvl => (
+                      <tr key={lvl.level} style={{ borderBottom: '1px solid #dbc89e' }}>
+                        <td style={{ padding: '2px 4px', fontWeight: 700 }}>{lvl.level}</td>
+                        <td style={{ padding: '2px 4px' }}>
+                          {lvl.choices.map((c, i) => (
+                            <span key={c.id}>
+                              {i > 0 && <b> or </b>}
+                              {c.icon} {c.name}
+                              {c.statEffect && (
+                                <span style={{ color: '#27ae60' }}>
+                                  {' '}({[
+                                    c.statEffect.health && `+${c.statEffect.health} HP`,
+                                    c.statEffect.armor && `+${c.statEffect.armor} Armor`,
+                                    c.statEffect.move && `+${c.statEffect.move} Move`,
+                                    c.statEffect.ap && `+${c.statEffect.ap} AP`,
+                                    c.statEffect.damage && `+${c.statEffect.damage} Dmg`,
+                                  ].filter(Boolean).join(', ')})
+                                </span>
+                              )}
+                              {!c.statEffect && c.category !== 'stat' && (
+                                <span style={{ color: '#7a6a5a' }}> — {c.description}</span>
+                              )}
+                            </span>
+                          ))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          }))}
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '14px', fontSize: '8pt', color: '#a0907a', fontFamily: "'MedievalSharp', cursive" }}>

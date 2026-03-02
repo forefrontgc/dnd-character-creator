@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getCharacter, getLevelUps, getModifiers, addLevelUp, addModifier, toggleModifier, deleteModifier, type DbCharacter, type DbLevelUp, type DbCustomModifier } from '@/lib/supabase';
-import { findRace, findClass, findSubclass, findArmor, findWeapon, computeFullStats, getDamageBonusFromLevels } from '@/lib/stats';
-import { LEVEL_BONUS_OPTIONS, MAX_LEVEL } from '@/lib/game-data';
+import { findRace, findClass, findSubclass, findArmor, findWeapon, computeFullStats, getDamageBonusFromLevels, getUnlockedSkills } from '@/lib/stats';
+import { LEVEL_BONUS_OPTIONS, MAX_LEVEL, findSkill } from '@/lib/game-data';
 import { StatBox } from '@/components/stat-box';
 import { LevelUpModal } from '@/components/level-up-modal';
 import { ModifierForm } from '@/components/modifier-form';
@@ -68,6 +68,7 @@ export default function CharacterDetailPage() {
   const weapon = findWeapon(character.class_id, character.weapon_id);
   const stats = computeFullStats(cls, race, subclass, armor, weapon, levelUps, modifiers);
   const damageBonus = getDamageBonusFromLevels(levelUps);
+  const unlockedSkills = getUnlockedSkills(levelUps);
 
   const abilities: { name: string; desc: string; source: string }[] = [];
   if (race) abilities.push({ name: race.trait, desc: race.traitDesc, source: 'Race' });
@@ -218,6 +219,46 @@ export default function CharacterDetailPage() {
             </div>
           )}
 
+          {/* Unlocked Skills */}
+          {unlockedSkills.filter(us => us.skill.category !== 'stat').length > 0 && (
+            <div className="bg-dark-card rounded-xl p-4 border border-gold/20 mb-8">
+              <h3 className="font-[family-name:var(--font-cinzel)] text-sm text-gold/60 font-bold mb-3">UNLOCKED SKILLS</h3>
+              <div className="space-y-2">
+                {unlockedSkills.filter(us => us.skill.category === 'ability').map(us => (
+                  <div key={us.skill.id} className="text-sm flex items-start gap-2">
+                    <span className="text-lg">{us.skill.icon}</span>
+                    <div>
+                      <span className="text-blue-400 font-bold">{us.skill.name}</span>
+                      <span className="text-white/30 text-xs ml-1">(Lv {us.level})</span>
+                      <span className="text-white/60"> — {us.skill.description}</span>
+                    </div>
+                  </div>
+                ))}
+                {unlockedSkills.filter(us => us.skill.category === 'passive').map(us => (
+                  <div key={us.skill.id} className="text-sm flex items-start gap-2">
+                    <span className="text-lg">{us.skill.icon}</span>
+                    <div>
+                      <span className="text-purple-400 font-bold">{us.skill.name}</span>
+                      <span className="text-white/30 text-xs ml-1">(Lv {us.level})</span>
+                      <span className="bg-purple-500/20 text-purple-400 text-[10px] px-1.5 py-0.5 rounded-full ml-1">Always active</span>
+                      <span className="text-white/60"> — {us.skill.description}</span>
+                    </div>
+                  </div>
+                ))}
+                {unlockedSkills.filter(us => us.skill.category === 'upgrade').map(us => (
+                  <div key={us.skill.id} className="text-sm flex items-start gap-2">
+                    <span className="text-lg">{us.skill.icon}</span>
+                    <div>
+                      <span className="text-orange-400 font-bold">{us.skill.name}</span>
+                      <span className="text-white/30 text-xs ml-1">(Lv {us.level})</span>
+                      <span className="text-white/60"> — {us.skill.description}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Level Up Section */}
           <div className="bg-dark-card rounded-xl p-4 border border-gold/20 mb-8">
             <div className="flex items-center justify-between mb-3">
@@ -239,13 +280,24 @@ export default function CharacterDetailPage() {
             ) : (
               <div className="space-y-1">
                 {levelUps.map(lu => {
-                  const bonus = LEVEL_BONUS_OPTIONS.find(b => b.id === lu.bonus_type);
+                  const legacy = LEVEL_BONUS_OPTIONS.find(b => b.id === lu.bonus_type);
+                  if (legacy) {
+                    return (
+                      <div key={lu.id} className="flex items-center gap-3 text-sm">
+                        <span className="text-gold/50 font-bold w-8">Lv {lu.level}</span>
+                        <span>{legacy.icon}</span>
+                        <span className="text-white/70">{legacy.name}</span>
+                        <span className="text-white/40">({legacy.effect})</span>
+                      </div>
+                    );
+                  }
+                  const skill = findSkill(lu.bonus_type);
                   return (
                     <div key={lu.id} className="flex items-center gap-3 text-sm">
                       <span className="text-gold/50 font-bold w-8">Lv {lu.level}</span>
-                      <span>{bonus?.icon}</span>
-                      <span className="text-white/70">{bonus?.name}</span>
-                      <span className="text-white/40">({bonus?.effect})</span>
+                      <span>{skill?.icon ?? '?'}</span>
+                      <span className="text-white/70">{skill?.name ?? lu.bonus_type}</span>
+                      <span className="text-white/40">({skill?.description ?? 'Unknown'})</span>
                     </div>
                   );
                 })}
@@ -305,6 +357,8 @@ export default function CharacterDetailPage() {
       {showLevelUp && (
         <LevelUpModal
           currentLevel={character.level}
+          classId={character.class_id}
+          subclassId={character.subclass_id}
           onConfirm={handleLevelUp}
           onCancel={() => setShowLevelUp(false)}
           saving={saving}

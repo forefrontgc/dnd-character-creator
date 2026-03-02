@@ -1,5 +1,5 @@
-import { RACES, CLASSES, ARMOR_TYPES, WEAPONS } from './game-data';
-import type { Race, GameClass, Subclass, ArmorType, Weapon } from './game-data';
+import { RACES, CLASSES, ARMOR_TYPES, WEAPONS, findSkill } from './game-data';
+import type { Race, GameClass, Subclass, ArmorType, Weapon, Skill } from './game-data';
 
 export interface LevelUp {
   id: string;
@@ -87,15 +87,26 @@ export function computeFullStats(
   const base = computeBaseStats(cls, race, subclass, armor, weapon);
   if (!base) return null;
 
-  // Sum level bonuses
+  // Sum level bonuses (legacy flat bonuses + skill tree stat effects)
+  const LEGACY_BONUS = new Set(['health', 'armor', 'move', 'ap', 'damage']);
   let levelHealth = 0, levelArmor = 0, levelMove = 0, levelAP = 0;
   for (const lu of levelUps) {
-    switch (lu.bonus_type) {
-      case 'health': levelHealth += 2; break;
-      case 'armor': levelArmor += 1; break;
-      case 'move': levelMove += 1; break;
-      case 'ap': levelAP += 1; break;
-      // 'damage' doesn't affect stats directly, it's tracked for the sheet
+    if (LEGACY_BONUS.has(lu.bonus_type)) {
+      switch (lu.bonus_type) {
+        case 'health': levelHealth += 2; break;
+        case 'armor': levelArmor += 1; break;
+        case 'move': levelMove += 1; break;
+        case 'ap': levelAP += 1; break;
+        // 'damage' doesn't affect stats directly, it's tracked for the sheet
+      }
+    } else {
+      const skill = findSkill(lu.bonus_type);
+      if (skill?.statEffect) {
+        levelHealth += skill.statEffect.health ?? 0;
+        levelArmor += skill.statEffect.armor ?? 0;
+        levelMove += skill.statEffect.move ?? 0;
+        levelAP += skill.statEffect.ap ?? 0;
+      }
     }
   }
 
@@ -117,7 +128,31 @@ export function computeFullStats(
   };
 }
 
-// Count weapon damage bonus from level ups
+// Count weapon damage bonus from level ups (legacy + skill tree)
 export function getDamageBonusFromLevels(levelUps: LevelUp[]): number {
-  return levelUps.filter(lu => lu.bonus_type === 'damage').length;
+  let bonus = 0;
+  for (const lu of levelUps) {
+    if (lu.bonus_type === 'damage') {
+      bonus += 1;
+    } else {
+      const skill = findSkill(lu.bonus_type);
+      if (skill?.statEffect?.damage) {
+        bonus += skill.statEffect.damage;
+      }
+    }
+  }
+  return bonus;
+}
+
+// Get all non-legacy skills unlocked via level-ups, for display on character sheet
+export interface UnlockedSkill { skill: Skill; level: number; }
+export function getUnlockedSkills(levelUps: LevelUp[]): UnlockedSkill[] {
+  const LEGACY_BONUS = new Set(['health', 'armor', 'move', 'ap', 'damage']);
+  const results: UnlockedSkill[] = [];
+  for (const lu of levelUps) {
+    if (LEGACY_BONUS.has(lu.bonus_type)) continue;
+    const skill = findSkill(lu.bonus_type);
+    if (skill) results.push({ skill, level: lu.level });
+  }
+  return results;
 }

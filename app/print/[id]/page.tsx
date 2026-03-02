@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getCharacter, getLevelUps, getModifiers, type DbCharacter, type DbLevelUp, type DbCustomModifier } from '@/lib/supabase';
-import { findRace, findClass, findSubclass, findArmor, findWeapon, computeFullStats, getDamageBonusFromLevels } from '@/lib/stats';
-import { LEVEL_BONUS_OPTIONS } from '@/lib/game-data';
+import { findRace, findClass, findSubclass, findArmor, findWeapon, computeFullStats, getDamageBonusFromLevels, getUnlockedSkills } from '@/lib/stats';
+import { LEVEL_BONUS_OPTIONS, findSkill } from '@/lib/game-data';
 
 export default function PrintPage() {
   const router = useRouter();
@@ -57,6 +57,8 @@ export default function PrintPage() {
   const weapon = findWeapon(character.class_id, character.weapon_id);
   const stats = computeFullStats(cls, race, subclass, armor, weapon, levelUps, modifiers);
   const damageBonus = getDamageBonusFromLevels(levelUps);
+  const unlockedSkills = getUnlockedSkills(levelUps);
+  const printableSkills = unlockedSkills.filter(us => us.skill.category !== 'stat');
   const activeModifiers = modifiers.filter(m => m.is_active);
 
   const abilities: { name: string; desc: string }[] = [];
@@ -135,6 +137,20 @@ export default function PrintPage() {
           ))}
         </div>
 
+        {/* Unlocked Skills */}
+        {printableSkills.length > 0 && (
+          <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #c4a46a' }}>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: '9pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '4px' }}>UNLOCKED SKILLS</div>
+            {printableSkills.map(us => (
+              <div key={us.skill.id} style={{ fontSize: '10pt', marginBottom: '2px' }}>
+                &bull; {us.skill.icon} <b>{us.skill.name}</b>
+                <span style={{ color: '#7a6a5a', fontSize: '9pt' }}> (Lv {us.level})</span>
+                {' '}&mdash; {us.skill.description}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Spells (if Mage) */}
         {subclass?.spells && (
           <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #c4a46a' }}>
@@ -152,10 +168,18 @@ export default function PrintPage() {
           <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #c4a46a' }}>
             <div style={{ fontFamily: "'Cinzel', serif", fontSize: '9pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '4px' }}>LEVEL-UP HISTORY</div>
             {levelUps.map(lu => {
-              const bonus = LEVEL_BONUS_OPTIONS.find(b => b.id === lu.bonus_type);
+              const legacy = LEVEL_BONUS_OPTIONS.find(b => b.id === lu.bonus_type);
+              if (legacy) {
+                return (
+                  <div key={lu.id} style={{ fontSize: '10pt', marginBottom: '2px' }}>
+                    &bull; Level {lu.level}: {legacy.icon} {legacy.name} ({legacy.effect})
+                  </div>
+                );
+              }
+              const skill = findSkill(lu.bonus_type);
               return (
                 <div key={lu.id} style={{ fontSize: '10pt', marginBottom: '2px' }}>
-                  &bull; Level {lu.level}: {bonus?.icon} {bonus?.name} ({bonus?.effect})
+                  &bull; Level {lu.level}: {skill?.icon ?? '?'} {skill?.name ?? lu.bonus_type} ({skill?.description ?? 'Unknown'})
                 </div>
               );
             })}
