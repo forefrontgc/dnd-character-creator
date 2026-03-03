@@ -161,6 +161,12 @@ export default function HomePage() {
             >
               📋 DM Reference
             </button>
+            <button
+              onClick={() => router.push('/dm-toolbox')}
+              className="px-6 py-3 rounded-xl border-2 border-gold/20 text-gold/60 hover:border-gold/50 hover:text-gold transition-all font-[family-name:var(--font-cinzel)] font-bold"
+            >
+              💀 DM Toolbox
+            </button>
           </div>
         </div>
       </main>
