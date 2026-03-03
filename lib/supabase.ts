@@ -152,6 +152,33 @@ export async function addLevelUp(characterId: string, level: number, bonusType: 
   return data as DbLevelUp;
 }
 
+export async function undoLevelUp(characterId: string) {
+  // Find the most recent level up
+  const { data: latest, error: fetchError } = await getSupabase()
+    .from('level_ups')
+    .select('*')
+    .eq('character_id', characterId)
+    .order('level', { ascending: false })
+    .limit(1)
+    .single();
+  if (fetchError) throw fetchError;
+
+  // Delete it
+  const { error: deleteError } = await getSupabase()
+    .from('level_ups')
+    .delete()
+    .eq('id', latest.id);
+  if (deleteError) throw deleteError;
+
+  // Decrement character level
+  const newLevel = latest.level - 1;
+  const { error: updateError } = await getSupabase()
+    .from('characters')
+    .update({ level: newLevel, updated_at: new Date().toISOString() })
+    .eq('id', characterId);
+  if (updateError) throw updateError;
+}
+
 // ========== Custom Modifier Operations ==========
 
 export async function getModifiers(characterId: string) {

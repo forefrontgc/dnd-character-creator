@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { getCharacter, getLevelUps, getModifiers, addLevelUp, addModifier, toggleModifier, deleteModifier, type DbCharacter, type DbLevelUp, type DbCustomModifier } from '@/lib/supabase';
+import { getCharacter, getLevelUps, getModifiers, addLevelUp, undoLevelUp, addModifier, toggleModifier, deleteModifier, type DbCharacter, type DbLevelUp, type DbCustomModifier } from '@/lib/supabase';
 import { findRace, findClass, findSubclass, findArmor, findWeapon, computeFullStats, getDamageBonusFromLevels, getUnlockedSkills } from '@/lib/stats';
 import { LEVEL_BONUS_OPTIONS, MAX_LEVEL, findSkill } from '@/lib/game-data';
 import { StatBox } from '@/components/stat-box';
@@ -86,6 +86,20 @@ export default function CharacterDetailPage() {
     } catch (err) {
       console.error('Failed to level up:', err);
       alert('Failed to level up. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUndoLevelUp = async () => {
+    if (!confirm('Undo the last level up? This will remove the most recent bonus and go back one level.')) return;
+    setSaving(true);
+    try {
+      await undoLevelUp(character.id);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to undo level up:', err);
+      alert('Failed to undo level up. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -263,17 +277,28 @@ export default function CharacterDetailPage() {
           <div className="bg-dark-card rounded-xl p-4 border border-gold/20 mb-8">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-[family-name:var(--font-cinzel)] text-sm text-gold/60 font-bold">LEVEL HISTORY</h3>
-              {character.level < MAX_LEVEL && (
-                <button
-                  onClick={() => setShowLevelUp(true)}
-                  className="px-4 py-2 rounded-xl bg-gold text-dark-bg font-[family-name:var(--font-cinzel)] font-bold text-sm hover:bg-gold-dark transition-all glow-pulse"
-                >
-                  Level Up!
-                </button>
-              )}
-              {character.level >= MAX_LEVEL && (
-                <span className="text-gold/50 text-sm font-[family-name:var(--font-cinzel)]">Max Level!</span>
-              )}
+              <div className="flex gap-2">
+                {levelUps.length > 0 && (
+                  <button
+                    onClick={handleUndoLevelUp}
+                    disabled={saving}
+                    className="px-3 py-2 rounded-xl border-2 border-red-400/30 text-red-400/70 hover:border-red-400/60 hover:text-red-400 font-[family-name:var(--font-cinzel)] font-bold text-sm transition-all disabled:opacity-30"
+                  >
+                    ↩ Undo
+                  </button>
+                )}
+                {character.level < MAX_LEVEL && (
+                  <button
+                    onClick={() => setShowLevelUp(true)}
+                    className="px-4 py-2 rounded-xl bg-gold text-dark-bg font-[family-name:var(--font-cinzel)] font-bold text-sm hover:bg-gold-dark transition-all glow-pulse"
+                  >
+                    Level Up!
+                  </button>
+                )}
+                {character.level >= MAX_LEVEL && (
+                  <span className="text-gold/50 text-sm font-[family-name:var(--font-cinzel)]">Max Level!</span>
+                )}
+              </div>
             </div>
             {levelUps.length === 0 ? (
               <p className="text-white/30 text-sm">Level 1 — No level ups yet</p>
