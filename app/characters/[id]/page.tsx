@@ -76,11 +76,11 @@ export default function CharacterDetailPage() {
   if (subclass?.extra) abilities.push({ name: 'Bonus', desc: subclass.extra, source: 'Subclass' });
   if (weapon?.special) abilities.push({ name: weapon.name, desc: weapon.special, source: 'Weapon' });
 
-  const handleLevelUp = async (bonusType: string) => {
+  const handleLevelUp = async (bonusType: string, newWeaponId?: string) => {
     setSaving(true);
     try {
       const newLevel = character.level + 1;
-      await addLevelUp(character.id, newLevel, bonusType);
+      await addLevelUp(character.id, newLevel, bonusType, newWeaponId);
       setShowLevelUp(false);
       await loadData();
     } catch (err) {
@@ -151,17 +151,20 @@ export default function CharacterDetailPage() {
       {/* Header */}
       <header className="bg-gradient-to-r from-dark-card via-dark-bg to-dark-card border-b-2 border-gold/30 p-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <button onClick={() => router.back()} className="text-gold/60 hover:text-gold transition-colors font-[family-name:var(--font-cinzel)] font-bold">
-            ← Back
-          </button>
-          <div className="flex gap-2">
-            <button
-              onClick={() => router.push(`/print/${character.id}`)}
-              className="px-4 py-2 rounded-xl bg-gold text-dark-bg font-[family-name:var(--font-cinzel)] font-bold text-sm hover:bg-gold-dark transition-all"
-            >
-              Print Sheet
+          <div className="flex gap-3">
+            <button onClick={() => router.push('/')} className="text-gold/60 hover:text-gold transition-colors font-[family-name:var(--font-cinzel)] font-bold">
+              🏠 Home
+            </button>
+            <button onClick={() => router.back()} className="text-gold/60 hover:text-gold transition-colors font-[family-name:var(--font-cinzel)] font-bold">
+              ← Back
             </button>
           </div>
+          <button
+            onClick={() => router.push(`/print/${character.id}`)}
+            className="px-4 py-2 rounded-xl bg-gold text-dark-bg font-[family-name:var(--font-cinzel)] font-bold text-sm hover:bg-gold-dark transition-all"
+          >
+            Print Sheet
+          </button>
         </div>
       </header>
 
@@ -305,6 +308,17 @@ export default function CharacterDetailPage() {
             ) : (
               <div className="space-y-1">
                 {levelUps.map(lu => {
+                  const isSwap = lu.bonus_type === 'swap_weapon';
+                  if (isSwap) {
+                    return (
+                      <div key={lu.id} className="flex items-center gap-3 text-sm">
+                        <span className="text-gold/50 font-bold w-8">Lv {lu.level}</span>
+                        <span>🔄</span>
+                        <span className="text-white/70">Swap Weapon</span>
+                        <span className="text-white/40">(Changed weapon)</span>
+                      </div>
+                    );
+                  }
                   const legacy = LEVEL_BONUS_OPTIONS.find(b => b.id === lu.bonus_type);
                   if (legacy) {
                     return (
@@ -384,6 +398,7 @@ export default function CharacterDetailPage() {
           currentLevel={character.level}
           classId={character.class_id}
           subclassId={character.subclass_id}
+          currentWeaponId={character.weapon_id}
           onConfirm={handleLevelUp}
           onCancel={() => setShowLevelUp(false)}
           saving={saving}

@@ -50,13 +50,72 @@ interface ThemeObject {
   icon: string;
 }
 
-const THEME_OBJECTS: Record<MapTheme, string[]> = {
-  dungeon: ['🔥', '💀', '📦', '🕷️', '⚱️', '🗝️', '💎', '🪤'],
-  castle: ['🏳️', '🪑', '👑', '🛡️', '⚔️', '🕯️', '📜', '🗡️'],
-  tavern: ['🪑', '🍺', '🕯️', '🛢️', '🍖', '🎵', '🪵', '🧹'],
-  graveyard: ['🪦', '⚰️', '🌳', '🦇', '🕯️', '🌙', '💀', '🕸️'],
-  forest: ['🌳', '🪨', '🌿', '🍄', '🔥', '🦌', '🌺', '🪵'],
-  cave: ['🪨', '💧', '💎', '🕷️', '🦇', '🔥', '⚱️', '🌊'],
+export interface MapObject {
+  icon: string;
+  label: string;
+}
+
+export const THEME_OBJECTS: Record<MapTheme, MapObject[]> = {
+  dungeon: [
+    { icon: '🔥', label: 'Torch' },
+    { icon: '💀', label: 'Skeleton' },
+    { icon: '📦', label: 'Chest' },
+    { icon: '🕷️', label: 'Spider' },
+    { icon: '⚱️', label: 'Urn' },
+    { icon: '🗝️', label: 'Key' },
+    { icon: '💎', label: 'Gem' },
+    { icon: '🪤', label: 'Trap' },
+  ],
+  castle: [
+    { icon: '🏳️', label: 'Banner' },
+    { icon: '🪑', label: 'Throne' },
+    { icon: '👑', label: 'Crown' },
+    { icon: '🛡️', label: 'Shield' },
+    { icon: '⚔️', label: 'Weapons Rack' },
+    { icon: '🕯️', label: 'Candle' },
+    { icon: '📜', label: 'Scroll' },
+    { icon: '🗡️', label: 'Sword' },
+  ],
+  tavern: [
+    { icon: '🪑', label: 'Chair' },
+    { icon: '🍺', label: 'Ale' },
+    { icon: '🕯️', label: 'Candle' },
+    { icon: '🛢️', label: 'Barrel' },
+    { icon: '🍖', label: 'Food' },
+    { icon: '🎵', label: 'Music' },
+    { icon: '🪵', label: 'Firewood' },
+    { icon: '🧹', label: 'Broom' },
+  ],
+  graveyard: [
+    { icon: '🪦', label: 'Headstone' },
+    { icon: '⚰️', label: 'Coffin' },
+    { icon: '🌳', label: 'Dead Tree' },
+    { icon: '🦇', label: 'Bats' },
+    { icon: '🕯️', label: 'Candle' },
+    { icon: '🌙', label: 'Moonlight' },
+    { icon: '💀', label: 'Skull' },
+    { icon: '🕸️', label: 'Cobwebs' },
+  ],
+  forest: [
+    { icon: '🌳', label: 'Tree' },
+    { icon: '🪨', label: 'Boulder' },
+    { icon: '🌿', label: 'Brush' },
+    { icon: '🍄', label: 'Mushroom' },
+    { icon: '🔥', label: 'Campfire' },
+    { icon: '🦌', label: 'Deer' },
+    { icon: '🌺', label: 'Flowers' },
+    { icon: '🪵', label: 'Log' },
+  ],
+  cave: [
+    { icon: '🪨', label: 'Stalagmite' },
+    { icon: '💧', label: 'Drip' },
+    { icon: '💎', label: 'Crystal' },
+    { icon: '🕷️', label: 'Spider' },
+    { icon: '🦇', label: 'Bats' },
+    { icon: '🔥', label: 'Torch' },
+    { icon: '⚱️', label: 'Urn' },
+    { icon: '🌊', label: 'Pool' },
+  ],
 };
 
 // Seeded random number generator for reproducible maps
@@ -129,10 +188,17 @@ export function generateBattleMap(
   gridSize: number,
   cellSize: number,
   seed: number,
-): void {
+  enabledIcons?: Set<string>,
+): { usedObjects: MapObject[] } {
   const rng = new SeededRandom(seed);
   const colors = THEME_COLORS[theme];
   const canvasSize = gridSize * cellSize;
+  const allThemeObjects = THEME_OBJECTS[theme];
+
+  // Filter icons to only enabled ones
+  const availableObjects = enabledIcons
+    ? allThemeObjects.filter(o => enabledIcons.has(o.icon))
+    : allThemeObjects;
 
   // Fill background
   ctx.fillStyle = colors.bg;
@@ -208,17 +274,20 @@ export function generateBattleMap(
     }
   }
 
-  // Place themed objects
+  // Place themed objects (only from enabled set)
   const objects: ThemeObject[] = [];
-  const icons = THEME_OBJECTS[theme];
+  const usedIconSet = new Set<string>();
 
-  for (const room of rooms) {
-    const numObjects = rng.nextInt(1, 3);
-    for (let i = 0; i < numObjects; i++) {
-      const ox = rng.nextInt(room.x, room.x + room.w - 1);
-      const oy = rng.nextInt(room.y, room.y + room.h - 1);
-      const icon = icons[rng.nextInt(0, icons.length - 1)];
-      objects.push({ x: ox, y: oy, icon });
+  if (availableObjects.length > 0) {
+    for (const room of rooms) {
+      const numObjects = rng.nextInt(1, 3);
+      for (let i = 0; i < numObjects; i++) {
+        const ox = rng.nextInt(room.x, room.x + room.w - 1);
+        const oy = rng.nextInt(room.y, room.y + room.h - 1);
+        const obj = availableObjects[rng.nextInt(0, availableObjects.length - 1)];
+        objects.push({ x: ox, y: oy, icon: obj.icon });
+        usedIconSet.add(obj.icon);
+      }
     }
   }
 
@@ -254,6 +323,10 @@ export function generateBattleMap(
   ctx.strokeStyle = colors.accent;
   ctx.lineWidth = 3;
   ctx.strokeRect(0, 0, canvasSize, canvasSize);
+
+  // Return which objects actually appeared on the map
+  const usedObjects = allThemeObjects.filter(o => usedIconSet.has(o.icon));
+  return { usedObjects };
 }
 
 // ========== ZONE MAP ==========
@@ -266,7 +339,7 @@ interface ZoneArea {
   radius: number;
 }
 
-const ZONE_AREAS: Record<MapTheme, { name: string; icon: string }[]> = {
+export const ZONE_AREAS: Record<MapTheme, { name: string; icon: string }[]> = {
   dungeon: [
     { name: 'Entrance', icon: '🚪' }, { name: 'Guard Room', icon: '⚔️' },
     { name: 'Treasury', icon: '💰' }, { name: 'Throne Room', icon: '👑' },
@@ -310,11 +383,20 @@ export function generateZoneMap(
   theme: MapTheme,
   canvasSize: number,
   seed: number,
-): void {
+  enabledZones?: Set<string>,
+): { usedZones: MapObject[] } {
   const rng = new SeededRandom(seed);
   const colors = THEME_COLORS[theme];
-  const areas = ZONE_AREAS[theme];
-  const numAreas = rng.nextInt(5, Math.min(8, areas.length));
+  const allAreas = ZONE_AREAS[theme];
+
+  // Filter to only enabled zones
+  const areas = enabledZones
+    ? allAreas.filter(a => enabledZones.has(a.icon + a.name))
+    : allAreas;
+
+  const numAreas = areas.length > 0
+    ? rng.nextInt(Math.min(5, areas.length), Math.min(8, areas.length))
+    : 0;
   const padding = 60;
 
   // Background
@@ -426,4 +508,8 @@ export function generateZoneMap(
   ctx.strokeStyle = colors.accent;
   ctx.lineWidth = 3;
   ctx.strokeRect(0, 0, canvasSize, canvasSize);
+
+  // Return placed zones as MapObjects
+  const usedZones: MapObject[] = zones.map(z => ({ icon: z.icon, label: z.name }));
+  return { usedZones };
 }

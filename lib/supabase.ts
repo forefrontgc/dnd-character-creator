@@ -133,7 +133,7 @@ export async function getLevelUps(characterId: string) {
   return data as DbLevelUp[];
 }
 
-export async function addLevelUp(characterId: string, level: number, bonusType: string) {
+export async function addLevelUp(characterId: string, level: number, bonusType: string, newWeaponId?: string) {
   // Insert the level up record
   const { data, error } = await getSupabase()
     .from('level_ups')
@@ -142,10 +142,14 @@ export async function addLevelUp(characterId: string, level: number, bonusType: 
     .single();
   if (error) throw error;
 
-  // Update character level
+  // Update character level (and weapon if swapping)
+  const updateFields: Record<string, unknown> = { level, updated_at: new Date().toISOString() };
+  if (bonusType === 'swap_weapon' && newWeaponId) {
+    updateFields.weapon_id = newWeaponId;
+  }
   const { error: updateError } = await getSupabase()
     .from('characters')
-    .update({ level, updated_at: new Date().toISOString() })
+    .update(updateFields)
     .eq('id', characterId);
   if (updateError) throw updateError;
 

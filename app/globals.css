@@ -98,17 +98,15 @@ body { margin: 0; font-family: "Inter", sans-serif; background: #1a1a2e; }
   .no-print { display: none !important; }
   .print-only { display: block !important; }
   .print-sheet {
-    width: 7.5in;
-    min-height: 10in;
-    max-height: 10in;
+    width: 8in;
+    min-height: 10.5in;
     margin: 0 auto;
-    padding: 0.4in;
+    padding: 0.3in 0.4in;
     background: linear-gradient(135deg, #f9f0db, #f0e2c0, #f5ebcf) !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
     color: #2c1810 !important;
-    font-size: 11pt;
-    overflow: hidden;
+    font-size: 10pt;
     page-break-after: always;
   }
   .print-sheet * { color: #2c1810 !important; }

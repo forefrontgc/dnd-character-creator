@@ -69,6 +69,11 @@ export default function PrintPage() {
   const healthBoxes = stats ? Math.min(stats.health, 30) : 0;
   const apBoxes = stats ? Math.min(stats.ap, 10) : 0;
 
+  // Shared styles for compact sections
+  const sectionStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.3)', borderRadius: '6px', padding: '5px 10px', marginBottom: '5px', border: '1px solid #c4a46a' };
+  const sectionTitle: React.CSSProperties = { fontFamily: "'Cinzel', serif", fontSize: '8pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '2px', letterSpacing: '0.5px' };
+  const bodyText: React.CSSProperties = { fontSize: '9pt', marginBottom: '1px' };
+
   return (
     <div>
       {/* Close button for screen */}
@@ -83,56 +88,50 @@ export default function PrintPage() {
 
       {/* Printable Sheet */}
       <div className="print-sheet parchment-bg mx-auto my-8 rounded-lg shadow-2xl" style={{ maxWidth: '7.5in', fontFamily: "'Inter', sans-serif" }}>
-        {/* Header */}
-        <div style={{ borderBottom: '3px double #8B6914', paddingBottom: '12px', marginBottom: '12px', textAlign: 'center' }}>
-          <h1 style={{ fontFamily: "'Cinzel', serif", fontSize: '28pt', fontWeight: 900, color: '#2c1810', margin: 0, letterSpacing: '2px' }}>
+        {/* Header — compact */}
+        <div style={{ borderBottom: '3px double #8B6914', paddingBottom: '6px', marginBottom: '6px', textAlign: 'center' }}>
+          <h1 style={{ fontFamily: "'Cinzel', serif", fontSize: '22pt', fontWeight: 900, color: '#2c1810', margin: 0, letterSpacing: '2px' }}>
             {character.char_name}
           </h1>
-          <p style={{ fontFamily: "'MedievalSharp', cursive", fontSize: '14pt', color: '#5a3e28', margin: '4px 0 0 0' }}>
+          <p style={{ fontFamily: "'MedievalSharp', cursive", fontSize: '12pt', color: '#5a3e28', margin: '2px 0 0 0' }}>
             {race?.name} {cls?.name} &mdash; {subclass?.name}
           </p>
-          <p style={{ fontSize: '10pt', color: '#7a6a5a', margin: '2px 0 0 0' }}>
-            Age: {character.char_age} &nbsp;|&nbsp; Gender: {character.char_gender} &nbsp;|&nbsp; Level {character.level}
-          </p>
-          <p style={{ fontSize: '9pt', color: '#9a8a7a', margin: '2px 0 0 0', fontStyle: 'italic' }}>
-            Played by {character.player_name}
+          <p style={{ fontSize: '8pt', color: '#7a6a5a', margin: '1px 0 0 0' }}>
+            Age: {character.char_age} &nbsp;|&nbsp; Gender: {character.char_gender} &nbsp;|&nbsp; Level {character.level} &nbsp;|&nbsp; Played by {character.player_name}
           </p>
         </div>
 
-        {/* Stats row */}
-        <div style={{ display: 'flex', justifyContent: 'space-around', padding: '10px 0', borderBottom: '2px solid #c4a46a', marginBottom: '10px' }}>
+        {/* Stats row — compact */}
+        <div style={{ display: 'flex', justifyContent: 'space-around', padding: '4px 0', borderBottom: '2px solid #c4a46a', marginBottom: '6px' }}>
           <PrintStat icon="❤️" label="HEALTH" value={stats?.health} />
           <PrintStat icon="🛡️" label="ARMOR" value={stats?.armor} />
           <PrintStat icon="👢" label="MOVES/TURN" value={stats?.moves} />
           <PrintStat icon="⭐" label="ACTION PTS" value={stats?.ap} />
         </div>
 
-        {/* Weapon */}
-        <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #c4a46a' }}>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '9pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '2px' }}>WEAPON</div>
-          <div style={{ fontSize: '13pt', fontWeight: 700 }}>{weapon?.name}</div>
-          <div style={{ fontSize: '10pt' }}>Damage: {weapon?.damage}{damageBonus > 0 ? ` + ${damageBonus}` : ''} &nbsp;|&nbsp; {weapon?.special}</div>
+        {/* Weapon + Armor side by side */}
+        <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
+          <div style={{ ...sectionStyle, flex: 1, marginBottom: 0 }}>
+            <div style={sectionTitle}>WEAPON</div>
+            <div style={{ fontSize: '11pt', fontWeight: 700 }}>{weapon?.name}</div>
+            <div style={bodyText}>DMG: {weapon?.damage}{damageBonus > 0 ? ` + ${damageBonus}` : ''} &nbsp;|&nbsp; {weapon?.special}</div>
+          </div>
+          <div style={{ ...sectionStyle, flex: 1, marginBottom: 0 }}>
+            <div style={sectionTitle}>ARMOR</div>
+            <div style={{ fontSize: '11pt', fontWeight: 700 }}>{armor?.name}</div>
+            <div style={bodyText}>{armor?.flavor}</div>
+          </div>
         </div>
 
-        {/* Armor */}
-        <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #c4a46a' }}>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '9pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '2px' }}>ARMOR</div>
-          <div style={{ fontSize: '13pt', fontWeight: 700 }}>{armor?.name}</div>
-          <div style={{ fontSize: '10pt' }}>{armor?.flavor}</div>
-        </div>
-
-        {/* Race Trait */}
-        <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #c4a46a' }}>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '9pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '2px' }}>RACE TRAIT</div>
-          <div style={{ fontSize: '11pt' }}><b>{race?.trait}</b> &mdash; {race?.traitDesc}</div>
-        </div>
-
-        {/* Special Abilities */}
-        <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #c4a46a' }}>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '9pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '4px' }}>SPECIAL ABILITIES</div>
-          {abilities.map((a, i) => (
-            <div key={i} style={{ fontSize: '10pt', marginBottom: '2px' }}>
-              &bull; <b>{a.name}</b> &mdash; {a.desc}
+        {/* Race Trait + Abilities merged */}
+        <div style={sectionStyle}>
+          <div style={sectionTitle}>ABILITIES & TRAITS</div>
+          <div style={bodyText}>
+            <b>{race?.trait}</b> <span style={{ color: '#7a6a5a', fontSize: '8pt' }}>(Race)</span> &mdash; {race?.traitDesc}
+          </div>
+          {abilities.filter(a => a.name !== race?.trait).map((a, i) => (
+            <div key={i} style={bodyText}>
+              <b>{a.name}</b> &mdash; {a.desc}
             </div>
           ))}
         </div>
@@ -153,79 +152,92 @@ export default function PrintPage() {
 
         {/* Spells (if Mage) */}
         {subclass?.spells && (
-          <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #c4a46a' }}>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: '9pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '4px' }}>SPELLS</div>
+          <div style={sectionStyle}>
+            <div style={sectionTitle}>SPELLS</div>
             {subclass.spells.map((sp, i) => (
-              <div key={i} style={{ fontSize: '10pt', marginBottom: '2px' }}>
-                &bull; <b>{sp.name}</b> ({sp.cost}) &mdash; {sp.effect}
+              <div key={i} style={bodyText}>
+                <b>{sp.name}</b> ({sp.cost}) &mdash; {sp.effect}
               </div>
             ))}
           </div>
         )}
 
-        {/* Level-Up History */}
-        {levelUps.length > 0 && (
-          <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #c4a46a' }}>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: '9pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '4px' }}>LEVEL-UP HISTORY</div>
-            {levelUps.map(lu => {
-              const legacy = LEVEL_BONUS_OPTIONS.find(b => b.id === lu.bonus_type);
-              if (legacy) {
-                return (
-                  <div key={lu.id} style={{ fontSize: '10pt', marginBottom: '2px' }}>
-                    &bull; Level {lu.level}: {legacy.icon} {legacy.name} ({legacy.effect})
-                  </div>
-                );
-              }
-              const skill = findSkill(lu.bonus_type);
-              return (
-                <div key={lu.id} style={{ fontSize: '10pt', marginBottom: '2px' }}>
-                  &bull; Level {lu.level}: {skill?.icon ?? '?'} {skill?.name ?? lu.bonus_type} ({skill?.description ?? 'Unknown'})
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {/* Level-Up History + Modifiers side by side when both exist */}
+        {(levelUps.length > 0 || activeModifiers.length > 0) && (
+          <div style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
+            {/* Level-Up History */}
+            {levelUps.length > 0 && (
+              <div style={{ ...sectionStyle, flex: 1, marginBottom: 0 }}>
+                <div style={sectionTitle}>LEVEL-UP HISTORY</div>
+                {levelUps.map(lu => {
+                  const isSwap = lu.bonus_type === 'swap_weapon';
+                  if (isSwap) {
+                    return (
+                      <div key={lu.id} style={{ fontSize: '8pt', marginBottom: '1px' }}>
+                        Lv{lu.level}: 🔄 Weapon Swap
+                      </div>
+                    );
+                  }
+                  const legacy = LEVEL_BONUS_OPTIONS.find(b => b.id === lu.bonus_type);
+                  if (legacy) {
+                    return (
+                      <div key={lu.id} style={{ fontSize: '8pt', marginBottom: '1px' }}>
+                        Lv{lu.level}: {legacy.icon} {legacy.name}
+                      </div>
+                    );
+                  }
+                  const skill = findSkill(lu.bonus_type);
+                  return (
+                    <div key={lu.id} style={{ fontSize: '8pt', marginBottom: '1px' }}>
+                      Lv{lu.level}: {skill?.icon ?? '?'} {skill?.name ?? lu.bonus_type}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
-        {/* Active Custom Modifiers */}
-        {activeModifiers.length > 0 && (
-          <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #c4a46a' }}>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: '9pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '4px' }}>ACTIVE MODIFIERS</div>
-            {activeModifiers.map(mod => {
-              const effects: string[] = [];
-              if (mod.health_mod !== 0) effects.push(`${mod.health_mod > 0 ? '+' : ''}${mod.health_mod} HP`);
-              if (mod.armor_mod !== 0) effects.push(`${mod.armor_mod > 0 ? '+' : ''}${mod.armor_mod} Armor`);
-              if (mod.move_mod !== 0) effects.push(`${mod.move_mod > 0 ? '+' : ''}${mod.move_mod} Move`);
-              if (mod.ap_mod !== 0) effects.push(`${mod.ap_mod > 0 ? '+' : ''}${mod.ap_mod} AP`);
-              return (
-                <div key={mod.id} style={{ fontSize: '10pt', marginBottom: '2px' }}>
-                  &bull; <b>{mod.name}</b> ({effects.join(', ')}){mod.description ? ` — ${mod.description}` : ''}
-                </div>
-              );
-            })}
+            {/* Active Custom Modifiers */}
+            {activeModifiers.length > 0 && (
+              <div style={{ ...sectionStyle, flex: 1, marginBottom: 0 }}>
+                <div style={sectionTitle}>ACTIVE MODIFIERS</div>
+                {activeModifiers.map(mod => {
+                  const effects: string[] = [];
+                  if (mod.health_mod !== 0) effects.push(`${mod.health_mod > 0 ? '+' : ''}${mod.health_mod} HP`);
+                  if (mod.armor_mod !== 0) effects.push(`${mod.armor_mod > 0 ? '+' : ''}${mod.armor_mod} Armor`);
+                  if (mod.move_mod !== 0) effects.push(`${mod.move_mod > 0 ? '+' : ''}${mod.move_mod} Move`);
+                  if (mod.ap_mod !== 0) effects.push(`${mod.ap_mod > 0 ? '+' : ''}${mod.ap_mod} AP`);
+                  return (
+                    <div key={mod.id} style={{ fontSize: '8pt', marginBottom: '1px' }}>
+                      <b>{mod.name}</b> ({effects.join(', ')})
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
         {/* Combat Tracker */}
-        <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #c4a46a' }}>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '9pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '6px' }}>COMBAT TRACKER</div>
-          <div style={{ fontSize: '10pt', marginBottom: '4px' }}>
+        <div style={sectionStyle}>
+          <div style={sectionTitle}>COMBAT TRACKER</div>
+          <div style={{ fontSize: '9pt', marginBottom: '2px' }}>
             <b>Health:</b> {Array.from({ length: healthBoxes }, () => '□').join(' ')}
           </div>
-          <div style={{ fontSize: '10pt' }}>
+          <div style={{ fontSize: '9pt' }}>
             <b>Action Points:</b> {Array.from({ length: apBoxes }, () => '□').join(' ')}
           </div>
         </div>
 
         {/* Notes */}
-        <div style={{ background: 'rgba(255,255,255,0.3)', borderRadius: '8px', padding: '8px 12px', border: '1px solid #c4a46a' }}>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: '9pt', fontWeight: 700, color: '#7a6a5a', marginBottom: '6px' }}>NOTES</div>
-          <div style={{ borderBottom: '1px solid #c4a46a', height: '20px', marginBottom: '4px' }}></div>
-          <div style={{ borderBottom: '1px solid #c4a46a', height: '20px', marginBottom: '4px' }}></div>
-          <div style={{ borderBottom: '1px solid #c4a46a', height: '20px' }}></div>
+        <div style={sectionStyle}>
+          <div style={sectionTitle}>NOTES</div>
+          <div style={{ borderBottom: '1px solid #c4a46a', height: '16px', marginBottom: '3px' }}></div>
+          <div style={{ borderBottom: '1px solid #c4a46a', height: '16px', marginBottom: '3px' }}></div>
+          <div style={{ borderBottom: '1px solid #c4a46a', height: '16px' }}></div>
         </div>
 
         {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '8pt', color: '#a0907a', fontFamily: "'MedievalSharp', cursive" }}>
+        <div style={{ textAlign: 'center', marginTop: '4px', fontSize: '7pt', color: '#a0907a', fontFamily: "'MedievalSharp', cursive" }}>
           D&D Character Creator &mdash; May your adventures be legendary!
         </div>
       </div>
@@ -236,9 +248,9 @@ export default function PrintPage() {
 function PrintStat({ icon, label, value }: { icon: string; label: string; value: number | undefined }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: '18pt' }}>{icon}</div>
-      <div style={{ fontSize: '22pt', fontWeight: 700 }}>{value}</div>
-      <div style={{ fontSize: '8pt', fontFamily: "'Cinzel', serif", fontWeight: 700, color: '#7a6a5a', letterSpacing: '1px' }}>{label}</div>
+      <div style={{ fontSize: '14pt' }}>{icon}</div>
+      <div style={{ fontSize: '18pt', fontWeight: 700 }}>{value}</div>
+      <div style={{ fontSize: '7pt', fontFamily: "'Cinzel', serif", fontWeight: 700, color: '#7a6a5a', letterSpacing: '1px' }}>{label}</div>
     </div>
   );
 }

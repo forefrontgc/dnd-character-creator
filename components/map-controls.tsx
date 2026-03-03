@@ -1,6 +1,6 @@
 'use client';
 
-import { MAP_THEMES, MAP_SIZES, type MapTheme, type MapSize, type MapType } from '@/lib/map-generator';
+import { MAP_THEMES, MAP_SIZES, THEME_OBJECTS, ZONE_AREAS, type MapTheme, type MapSize, type MapType } from '@/lib/map-generator';
 
 interface MapControlsProps {
   theme: MapTheme;
@@ -9,10 +9,21 @@ interface MapControlsProps {
   setSize: (s: MapSize) => void;
   mapType: MapType;
   setMapType: (t: MapType) => void;
+  enabledItems: Set<string>;
+  onToggleItem: (key: string) => void;
+  onToggleAll: (enabled: boolean) => void;
   onGenerate: () => void;
 }
 
-export function MapControls({ theme, setTheme, size, setSize, mapType, setMapType, onGenerate }: MapControlsProps) {
+export function MapControls({ theme, setTheme, size, setSize, mapType, setMapType, enabledItems, onToggleItem, onToggleAll, onGenerate }: MapControlsProps) {
+  const isBattle = mapType === 'battle';
+  const items = isBattle
+    ? THEME_OBJECTS[theme].map(o => ({ key: o.icon, icon: o.icon, label: o.label }))
+    : ZONE_AREAS[theme].map(a => ({ key: a.icon + a.name, icon: a.icon, label: a.name }));
+
+  const allEnabled = items.every(i => enabledItems.has(i.key));
+  const noneEnabled = items.every(i => !enabledItems.has(i.key));
+
   return (
     <div className="space-y-6">
       {/* Map Type */}
@@ -56,7 +67,7 @@ export function MapControls({ theme, setTheme, size, setSize, mapType, setMapTyp
       </div>
 
       {/* Size (battle maps only) */}
-      {mapType === 'battle' && (
+      {isBattle && (
         <div>
           <label className="block font-[family-name:var(--font-cinzel)] text-gold text-sm font-bold mb-2">Grid Size</label>
           <div className="flex gap-3">
@@ -73,6 +84,42 @@ export function MapControls({ theme, setTheme, size, setSize, mapType, setMapTyp
           </div>
         </div>
       )}
+
+      {/* Encounters & Items */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="font-[family-name:var(--font-cinzel)] text-gold text-sm font-bold">
+            {isBattle ? 'Items & Encounters' : 'Locations'}
+          </label>
+          <button
+            onClick={() => onToggleAll(noneEnabled || !allEnabled)}
+            className="text-xs text-gold/60 hover:text-gold transition-colors"
+          >
+            {allEnabled ? 'Deselect All' : 'Select All'}
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {items.map(item => {
+            const enabled = enabledItems.has(item.key);
+            return (
+              <button
+                key={item.key}
+                onClick={() => onToggleItem(item.key)}
+                className={`flex items-center gap-2 p-2 rounded-lg border-2 text-left text-sm transition-all
+                  ${enabled ? 'border-gold/50 bg-dark-border/50' : 'border-white/10 bg-dark-bg/30 opacity-50'}`}
+              >
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center text-xs transition-all flex-shrink-0
+                  ${enabled ? 'border-gold bg-gold/20 text-gold' : 'border-white/30'}`}
+                >
+                  {enabled && '✓'}
+                </div>
+                <span className="text-lg">{item.icon}</span>
+                <span className="text-white/70 truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Generate Button */}
       <button

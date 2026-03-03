@@ -1,10 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import type { MapTheme, MapSize, MapType } from '@/lib/map-generator';
+import { THEME_OBJECTS, ZONE_AREAS, type MapTheme, type MapSize, type MapType } from '@/lib/map-generator';
 import { MapCanvas } from '@/components/map-canvas';
 import { MapControls } from '@/components/map-controls';
+
+function getAllKeys(theme: MapTheme, mapType: MapType): string[] {
+  if (mapType === 'battle') {
+    return THEME_OBJECTS[theme].map(o => o.icon);
+  }
+  return ZONE_AREAS[theme].map(a => a.icon + a.name);
+}
 
 export default function MapsPage() {
   const router = useRouter();
@@ -12,6 +19,36 @@ export default function MapsPage() {
   const [size, setSize] = useState<MapSize>('medium');
   const [mapType, setMapType] = useState<MapType>('battle');
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 999999));
+
+  // Track enabled items per theme+type combo — start with all enabled
+  const [enabledMap, setEnabledMap] = useState<Record<string, Set<string>>>({});
+
+  const stateKey = `${mapType}:${theme}`;
+  const enabledItems = useMemo(() => {
+    if (enabledMap[stateKey]) return enabledMap[stateKey];
+    // Default: all items enabled
+    return new Set(getAllKeys(theme, mapType));
+  }, [enabledMap, stateKey, theme, mapType]);
+
+  const handleToggleItem = useCallback((key: string) => {
+    setEnabledMap(prev => {
+      const current = prev[stateKey] || new Set(getAllKeys(theme, mapType));
+      const next = new Set(current);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return { ...prev, [stateKey]: next };
+    });
+  }, [stateKey, theme, mapType]);
+
+  const handleToggleAll = useCallback((enabled: boolean) => {
+    setEnabledMap(prev => ({
+      ...prev,
+      [stateKey]: enabled ? new Set(getAllKeys(theme, mapType)) : new Set<string>(),
+    }));
+  }, [stateKey, theme, mapType]);
 
   const handleGenerate = () => {
     setSeed(Math.floor(Math.random() * 999999));
@@ -43,6 +80,9 @@ export default function MapsPage() {
               setSize={setSize}
               mapType={mapType}
               setMapType={setMapType}
+              enabledItems={enabledItems}
+              onToggleItem={handleToggleItem}
+              onToggleAll={handleToggleAll}
               onGenerate={handleGenerate}
             />
           </div>
@@ -54,6 +94,7 @@ export default function MapsPage() {
               size={size}
               mapType={mapType}
               seed={seed}
+              enabledItems={enabledItems}
             />
           </div>
         </div>

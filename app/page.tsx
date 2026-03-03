@@ -20,6 +20,7 @@ export default function HomePage() {
   async function loadPlayers() {
     try {
       const data = await getPlayers();
+      data.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
       setPlayers(data);
       const counts: Record<string, number> = {};
       for (const p of data) {
